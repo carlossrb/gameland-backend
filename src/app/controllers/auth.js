@@ -70,6 +70,7 @@ router.post("/validate", async (req, res) => {
       user: {
         username: process.env.MASTER_LOGIN.toUpperCase(),
         email: process.env.MASTER_LOGIN.toUpperCase(),
+        permission: process.env.MASTER
       },
       token: generateToken(
         process.env.ID_MASTER,
