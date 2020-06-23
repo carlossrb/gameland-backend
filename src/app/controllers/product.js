@@ -46,18 +46,17 @@ router.get("/:productId", async (req, res) => {
 router.post("/", async (req, res) => {
   try {
     if (
-      req.permission !== process.env.PRODUCER ||
-      req.permission !== process.env.MASTER
+      req.permission !== parseInt(process.env.PRODUCER) &&
+      req.permission !== parseInt(process.env.MASTER)
     )
-      res.status(403).send({ error: "Você não possui permissão para isso!" });
+      return res.status(400).send({ error: "Você não possui permissão para isso!" });
 
-    const product = await Product.create({ ...req.body, user: req.userId });
-
-    if (!product)
-      res.status(400).send({
-        error:
-          "Houve um problema ao inserir o jogo na base de dados. Tente novamente",
-      });
+    let product = await Product.create({ ...req.body, user: req.userId })
+    product = await product.populate('user').execPopulate()
+    if (!product) return res.status(400).send({
+      error:
+      "Houve um problema ao inserir o jogo na base de dados. Tente novamente",
+    });
     return res.status(200).send({ product });
   } catch (error) {
     return res.status(400).send({

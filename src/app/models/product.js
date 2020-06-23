@@ -10,10 +10,6 @@ const productSchema = new mongoose.Schema({
   //   type: mongoose.Schema.Types.ObjectId,
   //   ref: "thread",
   // }],
-  name: {
-    type: String,
-    required: true,
-  },
   description: {
     type: String,
     required: false,
@@ -28,7 +24,7 @@ const productSchema = new mongoose.Schema({
     uppercase: true,
   },
   category: {
-    type: String,
+    type: [String],
     required: true,
   },
   platforms: {
