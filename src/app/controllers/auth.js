@@ -16,7 +16,9 @@ router.post("/register", async (req, res) => {
   const { checked } = req.body;
 
   const data = {
-    permission: checked ? process.env.PRODUCER : process.env.USERPLAYER,
+    permission: checked
+      ? parseInt(process.env.PRODUCER)
+      : parseInt(process.env.USERPLAYER),
     email: req.body.email,
     username: req.body.username,
     password: req.body.password,
@@ -70,12 +72,9 @@ router.post("/validate", async (req, res) => {
       user: {
         username: process.env.MASTER_LOGIN.toUpperCase(),
         email: process.env.MASTER_LOGIN.toUpperCase(),
-        permission: parseInt(process.env.MASTER)
+        permission: parseInt(process.env.MASTER),
       },
-      token: generateToken(
-        process.env.ID_MASTER,
-        process.env.MASTER
-      ),
+      token: generateToken(process.env.ID_MASTER, parseInt(process.env.MASTER)),
     });
 
   const user = await User.findOne({
@@ -198,7 +197,7 @@ router.post("/reset_password", async (req, res) => {
         cnpj: user.cnpj,
         registerDate: user.registerDate,
         username: user.username,
-        permission: user.permission
+        permission: user.permission,
       },
       token: generateToken(user.id, user.permission),
     });
@@ -223,6 +222,38 @@ router.get("/check", authMiddleware, async (req, res) => {
     return res.send({ user, token: generateToken(user.id, user.permission) });
   } catch (err) {
     return res.status(400).send({ error: "Erro na autenticação" });
+  }
+});
+
+/**
+ * Concede acesso de admin para jogador
+ */
+router.put("/admin", authMiddleware, async (req, res) => {
+  const { email } = req.body;
+  try {
+    if (req.permission === parseInt(process.env.MASTER))
+      return await User.findOneAndUpdate(
+        { email, permission: parseInt(process.env.USERPLAYER) },
+        {
+          $set: {
+            permission: parseInt(process.env.ADMIN),
+          },
+        }
+      ).then((response) => {
+        if (response) return res.send({ success: "Permissão concedida!" });
+        else
+          return res
+            .status(400)
+            .send({ error: "Erro no processo de concessão permissões" });
+      });
+    else
+      return res
+        .status(400)
+        .send({ error: "Você não tem permissão para executar essa tarefa" });
+  } catch (err) {
+    return res
+      .status(400)
+      .send({ error: "Erro no processo de concessão permissões" });
   }
 });
 
