@@ -43,7 +43,10 @@ router.post("/register", async (req, res) => {
       return res
         .status(400)
         .send({ error: "CNPJ/CPF já cadastrado no sistema" });
-
+    if (!email || !cnpj || !username)
+      return res
+        .status(400)
+        .send({ error: "Dados insuficientes para realizar o cadastro" });
     // cria novo usuário
     const user = await User.create(data);
 
