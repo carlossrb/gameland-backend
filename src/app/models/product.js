@@ -18,6 +18,14 @@ const productSchema = new mongoose.Schema({
     type: [Number],
     required: false
   },
+  smilles:{
+    type: [Number],
+    required: false
+  },
+  games:{
+    type: [Number],
+    required: false
+  },
   title: {
     type: String,
     required: true,
@@ -31,7 +39,7 @@ const productSchema = new mongoose.Schema({
     type: [String],
     required: true,
   },
-  registerDate: {
+  productRegisterDate: {
     type: Date,
     default: Date.now,
   },

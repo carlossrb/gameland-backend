@@ -8,10 +8,16 @@ const Product = require("../models/product");
 
 router.use(authMiddleware);
 
-// Listagem de produtos (todos os usuários)
-router.get("/", async (req, res) => {
+// Listagem de produtos (todos os usuários) com filtros aplicados caso existam
+router.post("/list", async (req, res) => {
+  const { search, category, platform } = req.body.activeFilter;
+  let body = {};
+  if (search) body.title = { $regex: "^" + search + "$", $options: "i" };
+  if (category.length > 0) body.category = { $in: category };
+  if (platform.length > 0) body.platforms = { $in: platform };
+
   try {
-    const products = await Product.find().populate("user");
+    const products = await Product.find(body).populate("user");
     if (!products)
       return res.status(400).send({
         error: "Houve um problema ao listar os jogos. Tente novamente",
@@ -42,22 +48,49 @@ router.get("/:productId", async (req, res) => {
   }
 });
 
+// Faz um filtro com a busca (todos os usuários)
+router.post("/search", async (req, res) => {
+  const { search } = req.body;
+  try {
+    const products = await Product.findOne({
+      $or: [
+        { title: { $regex: "^" + search + "$", $options: "i" } },
+        { description: { $regex: "^" + search + "$", $options: "i" } },
+      ],
+    }).populate("user");
+
+    if (!products)
+      return res.status(400).send({
+        error: "Não há nenhum produto com este nome",
+      });
+
+    return res.status(200).send({ products: [products] });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).send({
+      error: "Houve um problema ao realizar a busca. Tente novamente",
+    });
+  }
+});
+
 // Criação de algum produto (PRODUCER ou MASTER)
 router.post("/", async (req, res) => {
   try {
     if (
-      req.permission !== parseInt(process.env.PRODUCER) &&
-      req.permission !== parseInt(process.env.MASTER)
+      parseInt(req.permission) !== parseInt(process.env.PRODUCER) &&
+      parseInt(req.permission) !== parseInt(process.env.MASTER)
     )
-      return res.status(400).send({ error: "Você não possui permissão para isso!" });
+      return res
+        .status(400)
+        .send({ error: "Você não possui permissão para isso!" });
 
-    let product = await Product.create({ ...req.body, user: req.userId })
-    product = await product.populate('user').execPopulate()
-    if (!product) return res.status(400).send({
-      error:
-      "Houve um problema ao inserir o jogo na base de dados. Tente novamente",
-    });
-    return res.status(200).send({ product });
+    let product = await Product.create({ ...req.body, user: req.userId });
+    if (!product)
+      return res.status(400).send({
+        error:
+          "Houve um problema ao inserir o jogo na base de dados. Tente novamente",
+      });
+    return res.status(200).send();
   } catch (error) {
     return res.status(400).send({
       error:
@@ -72,45 +105,41 @@ router.post("/", async (req, res) => {
 router.delete("/:productId", async (req, res) => {
   try {
     if (
-      req.permission === process.env.MASTER ||
-      req.permission === process.env.ADMIN
+      parseInt(req.permission) === parseInt(process.env.MASTER) ||
+      parseInt(req.permission) === parseInt(process.env.ADMIN)
     )
-      await Product.findByIdAndDelete(req.params.productId).then(() =>
-        res.status(200).send()
+      return await Product.findByIdAndDelete(req.params.productId).then(
+        (response) => {
+          if (response)
+            return res
+              .status(200)
+              .send({ success: "Jogo excluído com sucesso!" });
+          return res
+            .status(400)
+            .send({ error: "Jogo já foi excluído anteriormente!" });
+        }
       );
-    else if (req.permission === process.env.PRODUCER) {
-      await Product.findByIdAndDelete({
-        id: req.params.productId,
+    else if (parseInt(req.permission) === parseInt(process.env.PRODUCER)) {
+      return await Product.findByIdAndDelete({
+        _id: req.params.productId,
         user: req.userId,
-      }).then(() => res.status(200).send());
+      }).then((response) => {
+        if (response)
+          return res
+            .status(200)
+            .send({ success: "Jogo excluído com sucesso!" });
+        return res
+          .status(400)
+          .send({ error: "Jogo já foi excluído anteriormente!" });
+      });
     }
-    res.status(403).send({ error: "Você não possui permissão para isso!" });
+    return res
+      .status(400)
+      .send({ error: "Você não possui permissão para isso!" });
   } catch (error) {
+    console.log(error);
     return res.status(400).send({
       error: "Houve um problema ao deletar o jogo. Tente novamente",
-    });
-  }
-});
-
-//Filtros por produtor, plataforma, categoria (todos)
-// Listagem de produtos (todos os usuários)
-router.get("/filter", async (req, res) => {
-  const { user, _id, category, platforms } = req.body; //user - obj usuário , _id - id do produto
-  try {
-    const products = await Product.findOne({
-      user,
-      _id,
-      category,
-      platforms,
-    });
-    if (!products)
-      return res.status(400).send({
-        error: "Nenhum jogo a ser listado com esses filtros",
-      });
-    return res.status(200).send({ products });
-  } catch (error) {
-    return res.status(400).send({
-      error: "Houve um problema ao filtrar os jogos. Tente novamente",
     });
   }
 });
