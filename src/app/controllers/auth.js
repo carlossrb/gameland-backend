@@ -43,12 +43,13 @@ router.post("/register", async (req, res) => {
       return res
         .status(400)
         .send({ error: "CNPJ/CPF já cadastrado no sistema" });
-    if (!email || !cnpj || !username)
+    if (!email || (!cnpj && checked) || !username)
       return res
         .status(400)
         .send({ error: "Dados insuficientes para realizar o cadastro" });
     // cria novo usuário
-    const user = await User.create(data);
+    let user = await User.create(data);
+    user = await user.populate("rating").execPopulate()
 
     // apaga senha no retorno
     user.password = undefined;
@@ -76,6 +77,7 @@ router.post("/validate", async (req, res) => {
         username: process.env.MASTER_LOGIN.toUpperCase(),
         email: process.env.MASTER_LOGIN.toUpperCase(),
         permission: parseInt(process.env.MASTER),
+        _id:process.env.ID_MASTER
       },
       token: generateToken(process.env.ID_MASTER, parseInt(process.env.MASTER)),
     });
@@ -85,7 +87,7 @@ router.post("/validate", async (req, res) => {
       { email: email },
       { username: { $regex: "^" + email + "$", $options: "i" } },
     ],
-  }).select("+password");
+  }).select("+password").populate('rating');
 
   if (!user) return res.status(400).send({ error: "Usuário não encontrado" });
 
@@ -217,7 +219,7 @@ router.post("/reset_password", async (req, res) => {
  */
 router.get("/check", authMiddleware, async (req, res) => {
   try {
-    const user = await User.findById(req.userId);
+    const user = await User.findById(req.userId).populate('rating');
     if (!user)
       return res
         .status(400)

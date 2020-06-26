@@ -15,16 +15,24 @@ const productSchema = new mongoose.Schema({
     required: false,
   },
   stars:{
-    type: [Number],
-    required: false
+    type: Number,
+    required: false,
+    default: 0
   },
   smilles:{
-    type: [Number],
-    required: false
+    type: Number,
+    required: false,
+    default: 0
   },
   games:{
-    type: [Number],
-    required: false
+    type: Number,
+    required: false,
+    default: 0
+  },
+  ratinglength:{
+    type: Number,
+    required: false,
+    default: 0
   },
   title: {
     type: String,

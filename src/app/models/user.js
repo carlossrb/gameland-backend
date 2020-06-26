@@ -1,7 +1,6 @@
 const mongoose = require("../../dataBase");
 const bcrypt = require("bcryptjs");
-const {validateEmail} = require('../utils')
-
+const { validateEmail } = require("../utils");
 
 //Campos do banco para usuários
 //Permission: 1 - Jogador, 2 - Admin, 3 - Produtor, 4 - Master
@@ -10,10 +9,17 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  permission:{
-    type:Number,
-    required: true
+  permission: {
+    type: Number,
+    required: true,
   },
+  rating: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Rating",
+      select: false,
+    },
+  ],
   email: {
     type: String,
     unique: true,
@@ -21,9 +27,9 @@ const userSchema = new mongoose.Schema({
     uppercase: true,
     validate: [validateEmail, "Por favor, utilize um email válido!"],
   },
-  cnpj:{
+  cnpj: {
     type: String,
-    required:false,
+    required: false,
   },
   registerDate: {
     type: Date,

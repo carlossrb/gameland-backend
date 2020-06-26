@@ -2,8 +2,6 @@ const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middleware/auth");
 const Product = require("../models/product");
-//const Task = require("../models/thread");
-
 // após a verificação do token no middleware. Todas essas rotas estão protegidas pela autenticação
 
 router.use(authMiddleware);
@@ -17,7 +15,12 @@ router.post("/list", async (req, res) => {
   if (platform.length > 0) body.platforms = { $in: platform };
 
   try {
-    const products = await Product.find(body).populate("user");
+    let products = await Product.find(body).populate({
+      path : 'user'
+      // populate : {
+      //   path : 'rating'
+      // }
+    });
     if (!products)
       return res.status(400).send({
         error: "Houve um problema ao listar os jogos. Tente novamente",
@@ -26,49 +29,6 @@ router.post("/list", async (req, res) => {
   } catch (error) {
     return res.status(400).send({
       error: "Houve um problema ao listar os jogos. Tente novamente",
-    });
-  }
-});
-
-// Listagem de produto específico (todos os usuários)
-router.get("/:productId", async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.productId).populate(
-      "user"
-    );
-    if (!product)
-      return res.status(400).send({
-        error: "Houve um problema ao listar o jogo. Tente novamente",
-      });
-    return res.status(200).send({ product });
-  } catch (error) {
-    return res.status(400).send({
-      error: "Houve um problema ao listar o jogo. Tente novamente",
-    });
-  }
-});
-
-// Faz um filtro com a busca (todos os usuários)
-router.post("/search", async (req, res) => {
-  const { search } = req.body;
-  try {
-    const products = await Product.findOne({
-      $or: [
-        { title: { $regex: "^" + search + "$", $options: "i" } },
-        { description: { $regex: "^" + search + "$", $options: "i" } },
-      ],
-    }).populate("user");
-
-    if (!products)
-      return res.status(400).send({
-        error: "Não há nenhum produto com este nome",
-      });
-
-    return res.status(200).send({ products: [products] });
-  } catch (error) {
-    console.log(error);
-    return res.status(400).send({
-      error: "Houve um problema ao realizar a busca. Tente novamente",
     });
   }
 });
@@ -95,6 +55,40 @@ router.post("/", async (req, res) => {
     return res.status(400).send({
       error:
         "Houve um problema ao inserir o jogo na base de dados. Tente novamente",
+    });
+  }
+});
+
+// Atualização de dados do cartão
+router.put("/update/:productId", async (req, res) => {
+  try {
+    if (
+      parseInt(req.permission) !== parseInt(process.env.PRODUCER) &&
+      parseInt(req.permission) !== parseInt(process.env.MASTER)
+    )
+      return res
+        .status(400)
+        .send({ error: "Você não possui permissão para isso!" });
+
+    return await Product.findOneAndUpdate(
+      {
+        $and: [{ _id: req.params.productId }, { user: req.userId }],
+      },
+      {
+        $set: {
+          ...req.body,
+          user: req.userId,
+        },
+      }
+    ).then((response) => {
+      if (response) return res.status(200).send({ success: "Tudo Ok!" });
+      return res.status(400).send({
+        error: "Houve um problema ao listar os jogos. Tente novamente",
+      });
+    });
+  } catch (error) {
+    return res.status(400).send({
+      error: "Houve um problema ao listar os jogos. Tente novamente",
     });
   }
 });
@@ -144,26 +138,5 @@ router.delete("/:productId", async (req, res) => {
   }
 });
 
-//Sistema de avaliação (USERPLAYER, ADMIN)
-//Usuário avalia e é mostrada a media no produto
-router.put("/:productId", async (req, res) => {
-  const { value } = req.body;
-
-  try {
-    if (
-      req.permission === process.env.USERPLAYER ||
-      req.permission === process.env.ADMIN
-    ) {
-      const product = await Product.findById(req.params.productId);
-      if (!product)
-        return res.status(400).send({ error: "Produto não encontrado" });
-
-      product.stars.push(value);
-      product.save();
-      return res.send();
-    }
-    return res.status(400).send({ error: "Produto não encontrado" });
-  } catch (error) {}
-});
 
 module.exports = (app) => app.use("/product", router);
