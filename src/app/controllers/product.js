@@ -16,7 +16,7 @@ router.post("/list", async (req, res) => {
 
   try {
     let products = await Product.find(body).populate({
-      path : 'user'
+      path : 'user',
       // populate : {
       //   path : 'rating'
       // }
@@ -25,6 +25,7 @@ router.post("/list", async (req, res) => {
       return res.status(400).send({
         error: "Houve um problema ao listar os jogos. Tente novamente",
       });
+
     return res.status(200).send({ products });
   } catch (error) {
     return res.status(400).send({
@@ -83,12 +84,12 @@ router.put("/update/:productId", async (req, res) => {
     ).then((response) => {
       if (response) return res.status(200).send({ success: "Tudo Ok!" });
       return res.status(400).send({
-        error: "Houve um problema ao listar os jogos. Tente novamente",
+        error: "Houve um problema ao editar o jogo. Tente novamente",
       });
     });
   } catch (error) {
     return res.status(400).send({
-      error: "Houve um problema ao listar os jogos. Tente novamente",
+      error: "Houve um problema ao editar o jogo. Tente novamente",
     });
   }
 });

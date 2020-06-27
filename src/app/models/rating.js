@@ -7,17 +7,25 @@ const RatingSchema = new mongoose.Schema({
     ref: "Product",
     required: true,
   },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
   smilles: {
     type: Number,
     required: true,
+    default: 0
   },
   stars: {
     type: Number,
     required: true,
+    default: 0
   },
   games: {
     type: Number,
     required: true,
+    default: 0
   },
 });
 
