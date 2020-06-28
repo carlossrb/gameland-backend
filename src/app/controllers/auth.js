@@ -202,6 +202,7 @@ router.post("/reset_password", async (req, res) => {
         registerDate: user.registerDate,
         username: user.username,
         permission: user.permission,
+        rating: user.rating
       },
       token: generateToken(user.id, user.permission),
     });
