@@ -188,7 +188,7 @@ router.post("/reset_password", async (req, res) => {
       email,
       passwordResetToken: token,
       passwordDateExpires: { $gt: new Date() },
-    });
+    }).populate('rating');
     if (!user)
       return res.status(400).send({ error: "Token inválido ou expirado" });
 
