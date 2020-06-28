@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middleware/auth");
 const Product = require("../models/product");
-const User = require("../models/user");
 const Note = require("../models/note");
 
 router.use(authMiddleware);
