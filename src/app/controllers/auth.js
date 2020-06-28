@@ -248,7 +248,7 @@ router.put("/admin", authMiddleware, async (req, res) => {
         else
           return res
             .status(400)
-            .send({ error: "Erro no processo de concessão permissões" });
+            .send({ error: "Erro no processo de concessão permissões. Verifique se o email está correto" });
       });
     else
       return res
