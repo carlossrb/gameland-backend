@@ -1,4 +1,4 @@
-# Gameland.io - Back end
+# Gameland - Back end
 
 Webapp para divulgação e avaliação de games. Principais tecnologias de **Back-end** utilizadas foram:
 
